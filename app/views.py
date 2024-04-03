@@ -2,12 +2,19 @@
 Flask Documentation:     https://flask.palletsprojects.com/
 Jinja2 Documentation:    https://jinja.palletsprojects.com/
 Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
-This file creates your application.
+This poster creates your application.
 """
 
-from app import app
-from flask import render_template, request, jsonify, send_file
+from app import app, db
+from flask import render_template, request, jsonify, send_poster
 import os
+from app.forms import MovieForm
+from werkzeug.utils import secure_postername
+from app.models import Movie
+from flask import send_from_directory
+from . import db
+from app.config import Config
+UPLOAD_FOLDER = Config.UPLOAD_FOLDER
 
 
 ###
@@ -25,6 +32,43 @@ def index():
 
 # Here we define a function to collect form errors from Flask-WTF
 # which we can later use
+@app.route('/api/v1/movies/', methods=['POST'])
+def create():
+    form = MovieForm()
+
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        poster = form.poster.data
+
+        filename = secure_filename(poster.filename)
+        destination_folder = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+        os.makedirs(destination_folder, exist_ok=True)
+        poster.save(os.path.join(app.root_path, UPLOAD_FOLDER, filename))
+
+        created_at=created_at
+
+        movies = Movie(
+            title=title,
+            description=description,
+            poster=poster,
+            created_at=created_at
+        )
+        db.session.add(movies)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Movie Successfully added",
+            "title": title,
+            "poster": filename,
+            "description": description
+        }), 201
+    else:
+        return jsonify(errors=form_errors(form)), 400
+        
+ 
+
+
 def form_errors(form):
     error_messages = []
     """Collects form errors"""
@@ -38,11 +82,11 @@ def form_errors(form):
 
     return error_messages
 
-@app.route('/<file_name>.txt')
-def send_text_file(file_name):
-    """Send your static text file."""
-    file_dot_text = file_name + '.txt'
-    return app.send_static_file(file_dot_text)
+@app.route('/<poster_name>.txt')
+def send_text_poster(poster_name):
+    """Send your static text poster."""
+    poster_dot_text = poster_name + '.txt'
+    return app.send_static_poster(poster_dot_text)
 
 
 @app.after_request
