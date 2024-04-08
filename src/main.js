@@ -1,9 +1,13 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
+import { createApp } from 'vue'; 
+import App from './App.vue';
+import router from './router';
+import MovieForm from './components/MovieForm.vue'; 
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(router)
+app.use(router);
 
-app.mount('#app')
+// Register MovieForm as a global component
+app.component('MovieForm', MovieForm);
+
+app.mount('#app');

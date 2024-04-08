@@ -5,16 +5,19 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This poster creates your application.
 """
 
-from app import app, db
-from flask import render_template, request, jsonify, send_poster
 import os
+from app import app, db
+from flask import render_template, request, jsonify,  redirect, url_for, flash
 from app.forms import MovieForm
-from werkzeug.utils import secure_postername
+from werkzeug.utils import secure_filename
 from app.models import Movie
-from flask import send_from_directory
+from flask import send_from_directory #send_poster,
 from . import db
 from app.config import Config
 UPLOAD_FOLDER = Config.UPLOAD_FOLDER
+from flask_wtf.csrf import generate_csrf
+
+
 
 
 ###
@@ -32,7 +35,7 @@ def index():
 
 # Here we define a function to collect form errors from Flask-WTF
 # which we can later use
-@app.route('/api/v1/movies/', methods=['POST'])
+@app.route('/api/v1/movies', methods=['POST'])
 def create():
     form = MovieForm()
 
@@ -62,11 +65,14 @@ def create():
             "title": title,
             "poster": filename,
             "description": description
-        }), 201
+        })
     else:
         return jsonify(errors=form_errors(form)), 400
         
- 
+
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
 
 
 def form_errors(form):
@@ -86,7 +92,8 @@ def form_errors(form):
 def send_text_poster(poster_name):
     """Send your static text poster."""
     poster_dot_text = poster_name + '.txt'
-    return app.send_static_poster(poster_dot_text)
+    # return app.send_static_poster(poster_dot_text)
+    return send_from_directory(app.static_folder, poster_dot_text)
 
 
 @app.after_request
